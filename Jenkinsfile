@@ -1,28 +1,42 @@
-pipeline {
-    agent any
+@Library("Shared") _
+pipeline{
+    
+    agent{ label "swain" }
+    
     stages{
-        stage("Clone Code"){
+        
+        stage("Hello"){
             steps{
-                git url: "https://github.com/LondheShubham153/django-notes-app.git", branch: "main"
+                script{
+                    hello()
+                }
             }
         }
-        stage("Build and Test"){
+        stage("Code"){
             steps{
-                sh "docker build . -t note-app-test-new"
-            }
-        }
-        stage("Push to Docker Hub"){
+                script{
+                 clone("https://github.com/Sumantswain/Django-notes-app.git","dev")
+                }
+             }
+         }
+         stage("Build"){
+             steps{
+                 script{
+                     docker_build("notes-app","latest","sumantswain")
+                 }
+                
+             }
+         }
+        stage("Push to DockerHub"){
             steps{
-                withCredentials([usernamePassword(credentialsId:"dockerHub",passwordVariable:"dockerHubPass",usernameVariable:"dockerHubUser")]){
-                sh "docker tag note-app-test-new ${env.dockerHubUser}/note-app-test-new:latest"
-                sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPass}"
-                sh "docker push ${env.dockerHubUser}/note-app-test-new:latest"
+                script{
+                    docker_push("notes-app", "latest","sumantswain")
                 }
             }
         }
         stage("Deploy"){
             steps{
-                sh "docker-compose down && docker-compose up -d"
+                sh "docker compose up -d "
             }
         }
     }
